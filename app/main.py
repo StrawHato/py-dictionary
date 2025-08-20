@@ -14,14 +14,16 @@ class Dictionary:
         bucket = self.data[index]
         load_factor = (self.size + 1) / self.capacity
 
-        if load_factor > 2 / 3:
-            self._resize()
-
         for i, (k, v, h) in enumerate(bucket):
             if h == _hash:
                 if k == key:
                     bucket[i] = (key, value, _hash)
                     return
+
+        if load_factor > 2 / 3:
+            self._resize()
+            index = _hash % self.capacity
+            bucket = self.data[index]
 
         bucket.append((key, value, _hash))
         self.size += 1
