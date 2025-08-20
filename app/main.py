@@ -12,11 +12,16 @@ class Dictionary:
         _hash = hash(key)
         index = _hash % self.capacity
         bucket = self.data[index]
+        load_factor = (self.size + 1) / self.capacity
+
+        if load_factor > 2 / 3:
+            self._resize()
 
         for i, (k, v, h) in enumerate(bucket):
-            if k == key:
-                bucket[i] = (key, value, _hash)
-                return
+            if h == _hash:
+                if k == key:
+                    bucket[i] = (key, value, _hash)
+                    return
 
         bucket.append((key, value, _hash))
         self.size += 1
@@ -27,8 +32,9 @@ class Dictionary:
         bucket = self.data[index]
 
         for i, (k, v, h) in enumerate(bucket):
-            if k == key:
-                return v
+            if h == _hash:
+                if k == key:
+                    return v
 
         raise KeyError(f"Key {key} not found")
 
@@ -57,11 +63,12 @@ class Dictionary:
         bucket = self.data[index]
 
         for i, (k, v, h) in enumerate(bucket):
-            if k == key:
-                del bucket[i]
-                self.size -= 1
-                return
-        raise KeyError(key)
+            if h == _hash:
+                if k == key:
+                    del bucket[i]
+                    self.size -= 1
+                    return
+        raise KeyError(f"Key {key} not found")
 
     def update(
             self,
@@ -78,3 +85,37 @@ class Dictionary:
 
         for key, value in kwargs.items():
             self[key] = value
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        _hash = hash(key)
+        index = _hash % self.capacity
+        bucket = self.data[index]
+
+        for i, (k, v, h) in enumerate(bucket):
+            if h == _hash:
+                if k == key:
+                    return v
+
+        return default
+
+    def pop(self, key: Any, default: Any = None) -> Any:
+        _hash = hash(key)
+        index = _hash % self.capacity
+        bucket = self.data[index]
+
+        for i, (k, v, h) in enumerate(bucket):
+            if h == _hash:
+                if k == key:
+                    del bucket[i]
+                    self.size -= 1
+                    return v
+
+        if default is not None:
+            return default
+        else:
+            raise KeyError(f"Key {key} not found")
+
+    def __iter__(self) -> Any:
+        for bucket in self.data:
+            for key, value, _hash in bucket:
+                yield key
